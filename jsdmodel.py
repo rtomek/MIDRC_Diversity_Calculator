@@ -13,10 +13,12 @@
 #      limitations under the License.
 #
 
-from ExcelLayout import DataSource
+from typing import Any, Optional
+
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
-from typing import Optional, Any, List
+
+from excel_layout import DataSource
 
 
 class JSDTableModel(QAbstractTableModel):
@@ -48,7 +50,7 @@ class JSDTableModel(QAbstractTableModel):
     """
     HEADER_MAPPING = [
         "Date",
-        "JSD"
+        "JSD",
     ]
     data_source_added = Signal()
 
@@ -104,7 +106,7 @@ class JSDTableModel(QAbstractTableModel):
         self.data_sources[data_source_dict['name']] = DataSource(data_source_dict, self.custom_age_ranges)
         self.data_source_added.emit()
 
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def rowCount(self, parent: QModelIndex = None) -> int:
         """
         Get the number of rows in the model.
 
@@ -117,10 +119,10 @@ class JSDTableModel(QAbstractTableModel):
         Returns:
             int: The number of rows in the model.
         """
-        if parent.isValid():
+        if parent and parent.isValid():
             return len(self._input_data[parent.column()])
-        else:
-            return self.max_row_count
+        # else:
+        return self.max_row_count
 
     def update_input_data(self, new_input_data, new_column_infos):
         """
@@ -151,12 +153,12 @@ class JSDTableModel(QAbstractTableModel):
         for c in range(self.columnCount()):
             self.max_row_count = max(self.max_row_count, len(self._input_data[c]))
 
-    def columnCount(self, parent: QModelIndex = None) -> int:
+    def columnCount(self, _parent: QModelIndex = None) -> int:
         """
         Returns the number of columns in the model.
 
         Args:
-            parent (QModelIndex): The parent index. Defaults to QModelIndex().
+            _parent (QModelIndex): The parent index. Defaults to QModelIndex(). This is unused.
 
         Returns:
             int: The number of columns in the model.
@@ -164,7 +166,7 @@ class JSDTableModel(QAbstractTableModel):
         # return len(self.input_data[parent.row()])
         return len(self._input_data)
 
-    def headerData(self, section: int, orientation: int, role: int, *args, **kwargs) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> Any:
         """
         Returns the header data for the specified section, orientation, and role.
 
@@ -172,19 +174,17 @@ class JSDTableModel(QAbstractTableModel):
             section (int): The section index.
             orientation (int): The orientation of the header (Qt.Horizontal or Qt.Vertical).
             role (int): The role of the header data.
-            *args: Additional positional arguments.
-            **kwargs: Additional keyword arguments.
 
         Returns:
             Any: The header data for the specified section, orientation, and role.
         """
         if role != Qt.DisplayRole:
             return None
-
+        # else:
         if orientation == Qt.Horizontal:
             return JSDTableModel.HEADER_MAPPING[section % 2]
-        else:
-            return str(section + 1)
+        # else:
+        return str(section + 1)
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> Optional[Any]:
         """
@@ -215,7 +215,7 @@ class JSDTableModel(QAbstractTableModel):
                     for rect in rects:
                         if rect.contains(column, row):
                             return self._color_cache.setdefault(color, QColor(color))
-            return self._color_cache.setdefault(Qt.white, QColor(Qt.white))
+            return self._color_cache.setdefault(Qt.lightGray, QColor(Qt.lightGray))
         return None
 
     def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
